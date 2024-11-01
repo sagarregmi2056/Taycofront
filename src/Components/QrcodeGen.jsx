@@ -9,17 +9,19 @@ const QrcodeGen = () => {
 
   const handleBarCodeRead = ({data}) => {
     try {
-      const parsedData = JSON.parse(data); // Parse the QR code data
+      const parsedData = JSON.parse(data);
+      console.log(parsedData);
+      // Parse the QR code data
 
       // Extract ItemNumber from the details object
-      const itemNumber = parsedData.details.ItemNumber;
+      const OrderNr = parsedData.Order.OrderNr;
 
-      if (itemNumber) {
-        Alert.alert('QR Code Detected', `Item Number: ${itemNumber}`);
-        navigation.navigate('UserList', {itemName: itemNumber}); // Navigate to UserList with itemName
+      if (OrderNr) {
+        Alert.alert('QR Code Detected', `OrderNr: ${OrderNr}`);
+        navigation.navigate('UserList', {OrderNr: OrderNr}); // Navigate to UserList with itemName
         setScanning(false); // Stop scanning after detecting a QR code
       } else {
-        Alert.alert('Invalid QR Code', 'No Item Number found.');
+        Alert.alert('Invalid QR Code', 'No Order number found.');
       }
     } catch (error) {
       Alert.alert(
@@ -32,7 +34,7 @@ const QrcodeGen = () => {
   return (
     <View style={styles.viewStyle}>
       <Text style={styles.headingStyle}>Tayco</Text>
-      <Text style={styles.textStyle}>Scan to find details of the QR code</Text>
+      <Text style={styles.textStyle}>Scan to find details of the Order</Text>
 
       {scanning && (
         <RNCamera
@@ -53,6 +55,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#343a40',
   },
   camera: {
     flex: 1,
