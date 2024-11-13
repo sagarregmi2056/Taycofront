@@ -234,8 +234,8 @@ const QRCodeForm = () => {
 
        <!-- Quantity and Boxes section -->
        <div style="display:flex; justify-content :space-between; font-size :16px; margin-top :30px;">
-         <p>__________/ ${qrCodeData.Order.Quantity}   QTY</p>
-         <p>__________/________________  BOXES</p>
+         <p>_____/ ${qrCodeData.Order.Quantity}   QTY</p>
+         <p>_____/ ______  BOXES</p>
         
       
          
