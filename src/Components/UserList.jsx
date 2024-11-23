@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,14 +7,20 @@ import {
   TextInput,
   Button,
   Image,
+  Platform,
+  PermissionsAndroid,
+  Alert,
 } from 'react-native';
 import axios from 'axios';
 import {useRoute, useFocusEffect} from '@react-navigation/native';
+import RNHTMLtoPDF from 'react-native-html-to-pdf';
+import RNFS from 'react-native-fs';
 
 const UserList = () => {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [errors, setErrors] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const route = useRoute(); // Get navigation parameters
 
@@ -45,6 +51,7 @@ const UserList = () => {
       );
       if (response.data.qrCode) {
         setOrders([response.data.qrCode]); // Set the result as a single-item array
+        setSelectedOrder(response.data.qrCode); // Set the selected order
         setErrors('');
       } else {
         setErrors('Order not found.');
@@ -61,6 +68,7 @@ const UserList = () => {
       fetchOrders(); // Fetch orders when the tab is focused
     }, []), // Empty dependency array to make sure it only runs on focus
   );
+
   const renderOrder = ({item}) => (
     <View style={styles.orderItem}>
       <Text style={styles.textStyle}>
@@ -108,8 +116,119 @@ const UserList = () => {
           console.log('Image loading error:', error.nativeEvent.error)
         }
       />
+
+      {/* Save as PDF Button */}
+      {selectedOrder && selectedOrder._id === item._id && (
+        <Button
+          title="Save as PDF"
+          onPress={() => generatePDF(item)}
+          color="#28A745"
+        />
+      )}
     </View>
   );
+
+  // Function to generate PDF
+  const generatePDF = async order => {
+    let labelsContent = '';
+
+    // Check if order and Items are defined
+    if (!order || !order.Items) {
+      Alert.alert('Error', 'Order data is not available for PDF generation.');
+      return;
+    }
+
+    // Loop through each item in the Items array to generate individual labels
+    order.Items.forEach(item => {
+      labelsContent += `
+        <div style="width: 3in; height: 5in; border: 1px solid #000; padding: 10px; font-family: Arial, sans-serif; margin-bottom: 20px;">
+          <!-- Order and Item number section -->
+          <div style="text-align:center; margin-bottom :20px;">
+            <h1 style="color:red; font-size :24px; font-weight:bold;"> ORDER # ${
+              order.Order.OrderNr
+            } </h1>
+            <h2 style="color :blue; font-size :20px; font-weight:bold;"> ITEM # ${
+              item.ItemNumber
+            } </h2>
+          </div>
+          <!-- Description Section -->
+          <div style="text-align:center; margin-bottom :15px;">
+            <p style="color :orange; font-size :18px;"> ${
+              item.ItemDescription || 'DESCRIPTION LONG LOREM IPSUM DOLOR'
+            } </p>
+            - <p style="font-size :12px; color :gray;"> ${
+              item.SmallText || 'Small Text Here'
+            } </p>
+            <p style="color :green; font-size :16px;"> - ${
+              order.PickArea.PickAreaName || 'Pick Area Name'
+            } </p>
+            <p style="font-size :12px; color :blue;"> PLANT DATE : ${new Date(
+              order.plantDate,
+            ).toLocaleDateString()} </p>
+          </div>
+          <!-- Quantity and Boxes section -->
+          <div style="display:flex; justify-content :space-between; font-size :16px; margin-top :30px;">
+            <p>_____/ ${order.Order.Quantity} QTY</p>
+            <p>_____/ ______ BOXES</p>
+          </div>
+          <!-- QR Code Image -->
+          <div style="text-align:center; margin-top :30px;">
+            <img src="${
+              order.qrCodeUrl
+            }" alt="QR Code" style="width :100px; height :100px;" />
+          </div>
+        </div>
+      `;
+    });
+
+    try {
+      // Request storage permission before generating the PDF
+      const hasPermission = await requestStoragePermission();
+      if (!hasPermission) return;
+
+      // Generate PDF
+      const pdf = await RNHTMLtoPDF.convert({
+        html: labelsContent,
+        fileName: 'order_label',
+        directory: 'Documents',
+      });
+
+      // Get the path to Downloads folder (this will vary depending on the platform)
+      const downloadsPath = `${RNFS.DownloadDirectoryPath}/order_label.pdf`;
+
+      // Move the file to the Downloads folder (Android-specific)
+      await RNFS.moveFile(pdf.filePath, downloadsPath);
+
+      Alert.alert('Success', `PDF saved to:\n${downloadsPath}`);
+      console.log('PDF file saved to:', downloadsPath);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to generate and save PDF');
+      console.error(error);
+    }
+  };
+
+  // Function to request storage permission
+  const requestStoragePermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: 'Storage Permission Required',
+            message: 'This app needs access to your storage to download files.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return true;
+  };
 
   return (
     <View style={styles.viewStyle}>
@@ -146,7 +265,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#FFFFFF',
     backgroundColor: '#000000',
-
     padding: 10,
   },
   textStyle: {
@@ -181,7 +299,6 @@ const styles = StyleSheet.create({
   searchInput: {
     height: 40,
     borderColor: '#FFFFFF',
-
     color: '#FFFFFF',
     borderWidth: 1,
     marginBottom: 10,

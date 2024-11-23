@@ -198,7 +198,7 @@ const QRCodeForm = () => {
       Alert.alert('Error', 'QR Code data is not available for PDF generation.');
       return; // Exit the function if data is not available
     }
-
+     
     // Loop through each item in the Items array to generate individual labels
     qrCodeData.Items.forEach(item => {
       labelsContent += `
