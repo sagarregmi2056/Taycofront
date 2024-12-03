@@ -37,13 +37,19 @@ const pickupLocations = [
 
 const QRCodeForm = () => {
   const [formData, setFormData] = useState({
-    numberOfPackets: '',
-    itemsName: '',
-    plantDate: '',
-    cost: '',
-    pickAreaNr: '',
-    pickAreaName: 'Central Park', // Set default value for Pickup Area
-    items: [{ItemNumber: '', ItemDescription: '', UOM: '', SmallText: ''}], // State to manage dynamic item entries
+    // Set default value for Pickup Area
+    items: [
+      {
+        ItemNumber: '',
+        ItemName: '',
+        ItemDescription: '',
+        UOM: '',
+        Packets: '',
+        SmallText: '',
+        plantDate: '',
+        PickAreaNr: '',
+      },
+    ], // State to manage dynamic item entries
   });
 
   const [qrCodeData, setQRCodeData] = useState(null);
@@ -63,34 +69,21 @@ const QRCodeForm = () => {
       ...formData,
       items: [
         ...formData.items,
-        {ItemNumber: '', ItemDescription: '', UOM: '', SmallText: ''},
+        {
+          ItemNumber: '',
+          ItemName: '',
+          ItemDescription: '',
+          UOM: '',
+          Packets: '',
+          SmallText: '',
+          plantDate: '',
+          PickAreaNr: '',
+        },
       ],
     });
   };
 
   // Validation function
-  const validateFields = () => {
-    const {numberOfPackets, pickAreaNr, plantDate} = formData;
-    if (!numberOfPackets || isNaN(numberOfPackets) || numberOfPackets <= 0) {
-      Alert.alert(
-        'Validation Error',
-        'Number of Packets must be a positive number.',
-      );
-      return false;
-    }
-    if (!pickAreaNr || isNaN(pickAreaNr) || pickAreaNr <= 0) {
-      Alert.alert(
-        'Validation Error',
-        'Pick Area Number must be a positive number.',
-      );
-      return false;
-    }
-    if (!plantDate) {
-      Alert.alert('Validation Error', 'Plant Date is required.');
-      return false;
-    }
-    return true;
-  };
 
   const handlePickAreaChange = value => {
     const selectedArea = pickupLocations.find(
@@ -105,55 +98,30 @@ const QRCodeForm = () => {
 
   // QR Code generation
   const handleGenerateQRCode = async () => {
-    if (!validateFields()) return;
-
     // Validate plantDate format
-    const datePattern = /^\d{4}-\d{2}-\d{2}$/; // YYYY-MM-DD format
-    if (!datePattern.test(formData.plantDate)) {
-      Alert.alert(
-        'Validation Error',
-        'Plant Date must be in YYYY-MM-DD format.',
-      );
-      return;
-    }
 
     try {
-      const {
-        numberOfPackets,
-        itemsName,
-        plantDate,
-        cost,
-        pickAreaNr,
-        pickAreaName,
-        items,
-      } = formData;
+      const {items} = formData;
 
       // Map items to include PickAreaNr
       const mappedItems = items.map(item => ({
         ItemNumber: item.ItemNumber,
+        ItemName: item.ItemName,
         ItemDescription: item.ItemDescription,
-        PickAreaNr: pickAreaNr, // Use the selected Pick Area Number
+        PickAreaNr: item.PickAreaNr, // Use the selected Pick Area Number
         UOM: item.UOM,
         SmallText: item.SmallText,
+        Packets: parseInt(item.Packets) || 0,
       }));
 
       // Create order object with dynamic Order Number
       const order = {
         OrderNr: formData.orderNumber, // Get Order Number from form data
-        Quantity: parseInt(numberOfPackets),
       };
 
       const response = await axios.post(
-        'http://10.0.2.2:8525/api/qrcode/generate',
+        'https://tyacoproject-production.up.railway.app/api/qrcode/generate',
         {
-          numberOfPackets: parseInt(numberOfPackets),
-          itemsName,
-          plantDate,
-          cost: parseFloat(cost),
-          PickArea: {
-            PickAreaNr: pickAreaNr,
-            PickAreaName: pickAreaName,
-          },
           Items: mappedItems, // Use mapped items with PickAreaNr included
           Order: order,
         },
@@ -198,7 +166,7 @@ const QRCodeForm = () => {
       Alert.alert('Error', 'QR Code data is not available for PDF generation.');
       return; // Exit the function if data is not available
     }
-     
+
     // Loop through each item in the Items array to generate individual labels
     qrCodeData.Items.forEach(item => {
       labelsContent += `
@@ -224,17 +192,17 @@ const QRCodeForm = () => {
          </p>
         
          <p style="color :green; font-size :16px;">
-           - ${qrCodeData.PickArea.PickAreaName || 'Pick Area Name'}
+           - ${item.PickAreaName || 'Pick Area Name'}
          </p>
         
          <p style="font-size :12px; color :blue;">
-           PLANT DATE : ${new Date(qrCodeData.plantDate).toLocaleDateString()}
+           PLANT DATE : ${item.plantDate}
          </p>
        </div>
 
        <!-- Quantity and Boxes section -->
        <div style="display:flex; justify-content :space-between; font-size :16px; margin-top :30px;">
-         <p>_____/ ${qrCodeData.Order.Quantity}   QTY</p>
+         <p>_____/ ${item.Packets}   QTY</p>
          <p>_____/ ______  BOXES</p>
         
       
@@ -243,9 +211,7 @@ const QRCodeForm = () => {
 
        <!-- QR Code Image -->
        <div style="text-align:center; margin-top :30px;">
-         <img src="${
-           qrCodeData.qrCodeUrl
-         }" alt="QR Code" style="width :100px; height :100px;" />
+        <img src="${`https://tyacoproject-production.up.railway.app${qrCodeData.qrCodeUrl}`}" alt="QR Code" style="width :100px; height :100px;" />
        </div>
      </div>
    `;
@@ -280,13 +246,18 @@ const QRCodeForm = () => {
   // Reset form
   const resetForm = () => {
     setFormData({
-      numberOfPackets: '',
-      itemsName: '',
-      plantDate: '',
-      cost: '',
-      pickAreaNr: '',
-      pickAreaName: '20-FINAL PACK',
-      items: [{ItemNumber: '', ItemDescription: '', UOM: '', SmallText: ''}],
+      items: [
+        {
+          ItemNumber: '',
+          ItemDescription: '',
+          UOM: '',
+          SmallText: '',
+          ItemName: '',
+          Packets: '',
+          plantDate: '',
+          PickAreaNr: '',
+        },
+      ],
     });
     setQRCodeData(null);
   };
@@ -296,51 +267,11 @@ const QRCodeForm = () => {
       <Text style={styles.title}>QR Code Generation Form</Text>
 
       <TextInput
-        placeholder="Number of Packets"
-        value={formData.numberOfPackets}
-        onChangeText={value => handleInputChange('numberOfPackets', value)}
-        style={styles.input}
-        keyboardType="numeric"
-      />
-      <TextInput
-        placeholder="Items Name"
-        value={formData.itemsName}
-        onChangeText={value => handleInputChange('itemsName', value)}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Plant Date (YYYY-MM-DD)"
-        value={formData.plantDate}
-        onChangeText={value => handleInputChange('plantDate', value)}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Cost"
-        value={formData.cost}
-        onChangeText={value => handleInputChange('cost', value)}
-        style={styles.input}
-        keyboardType="numeric"
-      />
-      <TextInput
         placeholder="Order Number" // New input for Order Number
         value={formData.orderNumber}
         onChangeText={value => handleInputChange('orderNumber', value)}
         style={styles.input}
       />
-
-      <Text>Pick Area Number:</Text>
-      <Picker
-        selectedValue={formData.pickAreaNr}
-        onValueChange={value => handlePickAreaChange(value)}
-        style={styles.input}>
-        {pickupLocations.map(location => (
-          <Picker.Item
-            key={location.PickAreaNr}
-            label={location.PickAreaName}
-            value={location.PickAreaNr}
-          />
-        ))}
-      </Picker>
 
       <Text style={styles.itemTitle}>Items:</Text>
       {formData.items.map((item, index) => (
@@ -352,6 +283,12 @@ const QRCodeForm = () => {
             style={styles.input}
           />
           <TextInput
+            placeholder="Item Name"
+            value={item.ItemName}
+            onChangeText={value => handleItemChange(index, 'ItemName', value)}
+            style={styles.input}
+          />
+          <TextInput
             placeholder="Item Description"
             value={item.ItemDescription}
             onChangeText={value =>
@@ -359,6 +296,19 @@ const QRCodeForm = () => {
             }
             style={styles.input}
           />
+          <TextInput
+            placeholder="Plant Date"
+            value={item.plantDate}
+            onChangeText={value => handleItemChange(index, 'plantDate', value)}
+            style={styles.input}
+          />
+          <TextInput
+            placeholder="Pick Area Number"
+            value={item.PickAreaNr}
+            onChangeText={value => handleItemChange(index, 'PickAreaNr', value)}
+            style={styles.input}
+          />
+
           <TextInput
             placeholder="UOM"
             value={item.UOM}
@@ -370,6 +320,13 @@ const QRCodeForm = () => {
             value={item.SmallText}
             onChangeText={value => handleItemChange(index, 'SmallText', value)}
             style={styles.input}
+          />
+          <TextInput
+            placeholder="Packets"
+            value={item.Packets.toString()}
+            onChangeText={value => handleItemChange(index, 'Packets', value)}
+            style={styles.input}
+            keyboardType="numeric"
           />
         </View>
       ))}
@@ -386,13 +343,10 @@ const QRCodeForm = () => {
 
       {qrCodeData && (
         <View style={styles.qrCodeContainer}>
-          <Text style={styles.qrCodeLabel}>QR Code Label</Text>
-          <Text>Number of Packets: {qrCodeData.numberOfPackets}</Text>
-          <Text>Items Name: {qrCodeData.itemsName}</Text>
-          <Text>Plant Date: {qrCodeData.plantDate}</Text>
-          <Text>Cost: {qrCodeData.cost}</Text>
           <Image
-            source={{uri: qrCodeData.qrCodeUrl}}
+            source={{
+              uri: `https://tyacoproject-production.up.railway.app${qrCodeData.qrCodeUrl}`,
+            }}
             style={{width: 150, height: 150, marginTop: 10}}
           />
           <Button title="Generate PDF" onPress={generatePDF} color="#28A745" />

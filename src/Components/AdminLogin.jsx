@@ -20,7 +20,7 @@ const AdminLogin = ({navigation}) => {
   const handleLogin = async () => {
     try {
       const response = await axios.post(
-        'http://10.0.2.2:8525/api/admin/login',
+        'https://tyacoproject.onrender.com/api/admin/login',
         {
           username,
           password,

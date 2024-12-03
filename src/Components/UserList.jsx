@@ -15,6 +15,7 @@ import axios from 'axios';
 import {useRoute, useFocusEffect} from '@react-navigation/native';
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import RNFS from 'react-native-fs';
+import Print from 'react-native-print';
 
 const UserList = () => {
   const [orders, setOrders] = useState([]);
@@ -28,7 +29,7 @@ const UserList = () => {
   const fetchOrders = async () => {
     try {
       const response = await axios.get(
-        'http://10.0.2.2:8525/api/qrcode/allqrcode',
+        'https://tyacoproject-production.up.railway.app/api/qrcode/allqrcode',
       );
       if (response.data && response.data.data) {
         setOrders(response.data.data);
@@ -47,7 +48,7 @@ const UserList = () => {
     if (!OrderNr) return; // Prevent empty searches
     try {
       const response = await axios.get(
-        `http://10.0.2.2:8525/api/qrcode/search?OrderNr=${OrderNr}`,
+        `https://tyacoproject-production.up.railway.app/api/qrcode/search?OrderNr=${OrderNr}`,
       );
       if (response.data.qrCode) {
         setOrders([response.data.qrCode]); // Set the result as a single-item array
@@ -110,7 +111,9 @@ const UserList = () => {
 
       {/* Display QR Code Image */}
       <Image
-        source={{uri: item.qrCodeUrl}}
+        source={{
+          uri: `https://tyacoproject-production.up.railway.app${item.qrCodeUrl}`,
+        }}
         style={styles.imageStyle}
         onError={error =>
           console.log('Image loading error:', error.nativeEvent.error)
@@ -118,15 +121,84 @@ const UserList = () => {
       />
 
       {/* Save as PDF Button */}
+      {/* Save as PDF and Print Buttons */}
       {selectedOrder && selectedOrder._id === item._id && (
-        <Button
-          title="Save as PDF"
-          onPress={() => generatePDF(item)}
-          color="#28A745"
-        />
+        <>
+          <Button
+            title="Save as PDF"
+            onPress={() => generatePDF(item)}
+            color="#28A745"
+          />
+          <Button
+            title="Print"
+            onPress={() => printPDF(item)}
+            color="#007BFF"
+          />
+        </>
       )}
     </View>
   );
+
+  const printPDF = async order => {
+    try {
+      // Generate the PDF content first if not already generated
+      let labelsContent = '';
+      if (!order || !order.Items) {
+        Alert.alert('Error', 'Order data is not available for printing.');
+        return;
+      }
+
+      order.Items.forEach(item => {
+        labelsContent += `
+          <div style="width: 3in; height: 5in; border: 1px solid #000; padding: 10px; font-family: Arial, sans-serif; margin-bottom: 20px;">
+            <!-- Order and Item number section -->
+            <div style="text-align:center; margin-bottom :20px;">
+              <h1 style="color:red; font-size :24px; font-weight:bold;"> ORDER # ${
+                order.Order.OrderNr
+              } </h1>
+              <h2 style="color :blue; font-size :20px; font-weight:bold;"> ITEM # ${
+                item.ItemNumber
+              } </h2>
+            </div>
+            <!-- Description Section -->
+            <div style="text-align:center; margin-bottom :15px;">
+              <p style="color :orange; font-size :18px;"> ${
+                item.ItemDescription || 'DESCRIPTION LONG LOREM IPSUM DOLOR'
+              } </p>
+              - <p style="font-size :12px; color :gray;"> ${
+                item.SmallText || 'Small Text Here'
+              } </p>
+              <p style="color :green; font-size :16px;"> - ${
+                order.PickArea.PickAreaName || 'Pick Area Name'
+              } </p>
+              <p style="font-size :12px; color :blue;"> PLANT DATE : ${new Date(
+                order.plantDate,
+              ).toLocaleDateString()} </p>
+            </div>
+            <!-- Quantity and Boxes section -->
+            <div style="display:flex; justify-content :space-between; font-size :16px; margin-top :30px;">
+              <p>_____/ ${order.Order.Quantity} QTY</p>
+              <p>_____/ ______ BOXES</p>
+            </div>
+            <!-- QR Code Image -->
+            <div style="text-align:center; margin-top :30px;">
+          <img src="${`https://tyacoproject-production.up.railway.app${order.qrCodeUrl}`}" alt="QR Code" style="width :100px; height :100px;" />
+
+            </div>
+          </div>
+        `;
+      });
+
+      // Print the PDF content
+      await Print.print({
+        html: labelsContent,
+        name: 'order_label',
+      });
+    } catch (error) {
+      Alert.alert('Error', 'Failed to print the PDF');
+      console.error(error);
+    }
+  };
 
   // Function to generate PDF
   const generatePDF = async order => {
@@ -173,9 +245,7 @@ const UserList = () => {
           </div>
           <!-- QR Code Image -->
           <div style="text-align:center; margin-top :30px;">
-            <img src="${
-              order.qrCodeUrl
-            }" alt="QR Code" style="width :100px; height :100px;" />
+           <img src="${`https://tyacoproject-production.up.railway.app${order.qrCodeUrl}`}" alt="QR Code" style="width :100px; height :100px;" />
           </div>
         </div>
       `;
