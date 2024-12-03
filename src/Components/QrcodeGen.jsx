@@ -17,7 +17,6 @@ const QrcodeGen = () => {
       const OrderNr = parsedData.Order.OrderNr;
 
       if (OrderNr) {
-        Alert.alert('QR Code Detected', `OrderNr: ${OrderNr}`);
         navigation.navigate('UserList', {OrderNr: OrderNr}); // Navigate to UserList with itemName
         setScanning(false); // Stop scanning after detecting a QR code
       } else {

@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#000000',
     marginBottom: 10,
     padding: 10,
     borderRadius: 5,
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '##000000',
     borderRadius: 5,
     backgroundColor: '#f9f9f9',
   },

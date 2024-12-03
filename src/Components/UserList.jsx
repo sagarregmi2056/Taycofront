@@ -154,6 +154,9 @@ const UserList = () => {
             </div>
             <!-- Description Section -->
             <div style="text-align:center; margin-bottom :15px;">
+             <p style="color :orange; font-size :18px;"> ${
+               item.ItemName || 'DESCRIPTION LONG LOREM IPSUM DOLOR'
+             } </p>
               <p style="color :orange; font-size :18px;"> ${
                 item.ItemDescription || 'DESCRIPTION LONG LOREM IPSUM DOLOR'
               } </p>
@@ -217,6 +220,10 @@ const UserList = () => {
           </div>
           <!-- Description Section -->
           <div style="text-align:center; margin-bottom :15px;">
+
+          <P style="color :orange; font-size :18px;"> ${
+            item.ItemName || 'DESCRIPTION LONG LOREM IPSUM DOLOR'
+          } </p>
             <p style="color :orange; font-size :18px;"> ${
               item.ItemDescription || 'DESCRIPTION LONG LOREM IPSUM DOLOR'
             } </p>
