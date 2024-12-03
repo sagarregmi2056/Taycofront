@@ -72,26 +72,10 @@ const UserList = () => {
 
   const renderOrder = ({item}) => (
     <View style={styles.orderItem}>
-      <Text style={styles.textStyle}>
-        Number of Packets: {item.numberOfPackets}
-      </Text>
-      <Text style={styles.textStyle}>Items Name: {item.itemsName}</Text>
-      <Text style={styles.textStyle}>Cost: ${item.cost}</Text>
-      <Text style={styles.textStyle}>
-        Plant Date: {new Date(item.plantDate).toLocaleDateString()}
-      </Text>
-
       {/* Displaying Order details */}
       <Text style={styles.textStyle}>Order Number: {item.Order.OrderNr}</Text>
-      <Text style={styles.textStyle}>Quantity: {item.Order.Quantity}</Text>
 
       {/* Displaying Pick Area details */}
-      <Text style={styles.textStyle}>
-        Pick Area Number: {item.PickArea.PickAreaNr}
-      </Text>
-      <Text style={styles.textStyle}>
-        Pick Area Name: {item.PickArea.PickAreaName}
-      </Text>
 
       {/* Display each item in the Items array */}
       {item.Items.map((itemDetail, index) => (
@@ -99,13 +83,21 @@ const UserList = () => {
           <Text style={styles.textStyle}>
             Item {index + 1} Number: {itemDetail.ItemNumber}
           </Text>
+          <Text style={styles.textStyle}>Item Name: {itemDetail.ItemName}</Text>
           <Text style={styles.textStyle}>
             Description: {itemDetail.ItemDescription}
+          </Text>
+          <Text style={styles.textStyle}>
+            Plant Date : {itemDetail.plantDate}
+          </Text>
+          <Text style={styles.textStyle}>
+            Pick Area: {itemDetail.PickAreaNr}
           </Text>
           <Text style={styles.textStyle}>UOM: {itemDetail.UOM}</Text>
           <Text style={styles.textStyle}>
             Small Text: {itemDetail.SmallText}
           </Text>
+          <Text style={styles.textStyle}>Packets: {itemDetail.Packets}</Text>
         </View>
       ))}
 
@@ -169,15 +161,15 @@ const UserList = () => {
                 item.SmallText || 'Small Text Here'
               } </p>
               <p style="color :green; font-size :16px;"> - ${
-                order.PickArea.PickAreaName || 'Pick Area Name'
+                item.PickAreaNr || 'Pick Area Name'
               } </p>
-              <p style="font-size :12px; color :blue;"> PLANT DATE : ${new Date(
-                order.plantDate,
-              ).toLocaleDateString()} </p>
+              <p style="font-size :12px; color :blue;"> PLANT DATE : ${
+                item.plantDate
+              } </p>
             </div>
             <!-- Quantity and Boxes section -->
             <div style="display:flex; justify-content :space-between; font-size :16px; margin-top :30px;">
-              <p>_____/ ${order.Order.Quantity} QTY</p>
+              <p>_____/ ${item.Packets} QTY</p>
               <p>_____/ ______ BOXES</p>
             </div>
             <!-- QR Code Image -->
@@ -232,15 +224,15 @@ const UserList = () => {
               item.SmallText || 'Small Text Here'
             } </p>
             <p style="color :green; font-size :16px;"> - ${
-              order.PickArea.PickAreaName || 'Pick Area Name'
+              item.PickAreaNr || 'Pick Area Name'
             } </p>
-            <p style="font-size :12px; color :blue;"> PLANT DATE : ${new Date(
-              order.plantDate,
-            ).toLocaleDateString()} </p>
+            <p style="font-size :12px; color :blue;"> PLANT DATE : ${
+              item.plantDate
+            } </p>
           </div>
           <!-- Quantity and Boxes section -->
           <div style="display:flex; justify-content :space-between; font-size :16px; margin-top :30px;">
-            <p>_____/ ${order.Order.Quantity} QTY</p>
+            <p>_____/ ${item.Packets} QTY</p>
             <p>_____/ ______ BOXES</p>
           </div>
           <!-- QR Code Image -->
